@@ -1,0 +1,11 @@
+schema_version: 20180708
+name: icici_apigee
+version: 1.0.3
+runtime: python3.8
+build_image: fnproject/python:3.9-dev
+run_image: fnproject/python:3.9
+entrypoint: /python/bin/fdk /function/func.py handler
+memory: 256
+config:
+  public_key_ocid: "ocid1.vaultsecret.oc1.ap-mumbai-1.amaaaaaampahd3iao4m2hyty6tvd3d23tiag3iizsre3rekyhvp6tkrpytca"
+  server_private_key_ocid: "ocid1.vaultsecret.oc1.ap-mumbai-1.amaaaaaampahd3iachlgnmmrfofpahggmehf5fxvtgya2zlkzootouzd6qgq"
