@@ -1,10 +1,7 @@
 import json,secrets,string,oci,base64,logging,io
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA
-from Crypto.Util.Padding import unpad
-from cryptography.hazmat.primitives import padding
-from cryptography.hazmat.backends import default_backend
+from Crypto.Util.Padding import pad, unpad
 
 from fdk import response
 
@@ -31,40 +28,24 @@ def read_public_key_from_oci_vault(key_ocid):
         raise
     return key_str
 
-
-
 def generate_random(length):
     characters = string.ascii_letters + string.digits
     random_key = ''.join(secrets.choice(characters) for _ in range(length))
     return random_key
 
 def encrypt_symm(key, init_vector, value):
-    backend = default_backend()
-    key = key.encode('utf-8').ljust(32, b'\0')[:32]  
-    iv = init_vector.encode('utf-8')
-    data = value.encode('utf-8')
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=backend)
-    encryptor = cipher.encryptor()
-    padder = padding.PKCS7(128).padder()
-    padded_data = padder.update(data) + padder.finalize()
-
-    encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
-    result = iv + encrypted_data
-
-    return base64.b64encode(result).decode('utf-8')
+    cipher = AES.new(key.encode('utf-8'), AES.MODE_CBC, init_vector.encode('utf-8'))
+    encrypted = cipher.encrypt(pad(value.encode('utf-8'), AES.block_size))
+    return base64.b64encode(init_vector.encode('utf-8') + encrypted).decode('utf-8')
 
 
 def decrypt_symm(key, encrypted_str):
     encrypted = base64.b64decode(encrypted_str.encode('utf-8'))
     iv = encrypted[:16]
     ciphertext = encrypted[16:]
-    key = key.encode('utf-8').ljust(32, b'\0')[:32]  # Convert to bytes and then pad
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
-    decryptor = cipher.decryptor()
-    decrypted_data = decryptor.update(ciphertext) + decryptor.finalize()
-    unpadder = padding.PKCS7(128).unpadder()
-    unpadded_data = unpadder.update(decrypted_data) + unpadder.finalize()
-    return unpadded_data.decode('utf-8')
+    cipher = AES.new(key.encode('utf-8'), AES.MODE_CBC, iv)
+    decrypted = unpad(cipher.decrypt(ciphertext), AES.block_size)
+    return decrypted.decode('utf-8')
 
 
 def encrypt_asymm(b64_msg, file_path):
