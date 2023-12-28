@@ -20,13 +20,14 @@ def create_json_payload(resquest_signature_encrypted_value, symmetric_key_encryp
     return payload
 
 def read_public_key_from_oci_vault(secret_ocid):
-    vault_client = oci.secrets.SecretsClient()
+    config = oci.config.from_file()
+    vault_client = oci.secrets.SecretsClient(config=config)
+
     response = vault_client.get_secret_version(secret_ocid, version_number=1)
     public_key_data = base64.b64decode(response.data.secret_bundle_content.content)
     public_key_str = public_key_data.decode('utf-8')
 
     return public_key_str
-
 
 
 def generate_random(length):
@@ -64,7 +65,7 @@ def decrypt_symm(key, encrypted_str):
 
 
 def encrypt_asymm(b64_msg, file_path):
-    public_key = RSA.import_key(read_public_key_from_oci_vault(secret_ocid))
+    public_key = RSA.import_key(read_public_key_from_oci_vault(file_path))
     cipher = PKCS1_OAEP.new(public_key)
     encrypted_msg = cipher.encrypt(b64_msg)
     return base64.b64encode(encrypted_msg).decode('utf-8')
