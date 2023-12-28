@@ -19,15 +19,18 @@ def create_json_payload(resquest_signature_encrypted_value, symmetric_key_encryp
     }
     return payload
 
-def read_public_key_from_oci_vault(secret_ocid):
-    config = oci.config.from_file()
-    vault_client = oci.secrets.SecretsClient(config=config)
+def read_public_key_from_oci_vault(key_ocid):
+    signer = oci.auth.signers.get_resource_principals_signer()
+    try:
+        client = oci.secrets.SecretsClient({}, signer=signer)
+        key_content = client.get_secret_bundle(key_ocid).data.secret_bundle_content.content.encode('utf-8')
+        key_bytes = base64.b64decode(key_content)
+        key_str = key_bytes.decode('utf-8')
+    except Exception as ex:
+        print("ERROR: failed to retrieve the key from the vault", ex)
+        raise
+    return key_str
 
-    response = vault_client.get_secret_version(secret_ocid, version_number=1)
-    public_key_data = base64.b64decode(response.data.secret_bundle_content.content)
-    public_key_str = public_key_data.decode('utf-8')
-
-    return public_key_str
 
 
 def generate_random(length):
