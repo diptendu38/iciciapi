@@ -1,4 +1,5 @@
 import secrets
+import logging
 import string
 import base64
 from Crypto.Cipher import AES, PKCS1_OAEP
@@ -18,10 +19,10 @@ def read_key_from_vault(key_ocid):
         client = oci.secrets.SecretsClient({}, signer=signer)
         key_content = client.get_secret_bundle(key_ocid).data.secret_bundle_content.content.encode('utf-8')
         key_bytes = base64.b64decode(key_content)
+        return key_bytes
     except Exception as ex:
-        print("ERROR: failed to retrieve the key from the vault", ex)
+        logging.error("ERROR: failed to retrieve the key from the vault - {}".format(ex))
         raise
-    return key_bytes
 
 def encrypt_symm(key, init_vector, value):
     cipher = AES.new(key, AES.MODE_CBC, init_vector)
@@ -39,15 +40,14 @@ def encryption_logic(payload, key_ocid):
     randomno = generate_random(16)
     init_vector = generate_random(16)
     public_key_bytes = read_key_from_vault(key_ocid)
-    public_key = serialization.load_pem_public_key(
-    public_key_bytes,
-    backend=default_backend())
-    encryptedData = encrypt_symm(randomno.encode('utf-8'), init_vector.encode('utf-8'), payload)
-    encryptedKey = encrypt_asymmetric(public_key, randomno)
-    return encryptedData,encryptedKey
-
-    #print("Random Number:", randomno)
-    #print("EncryptedData:", encryptedData)
-    #print("EncryptedKey:", encryptedKey)
-
+    public_key = serialization.load_pem_public_key(public_key_bytes, backend=default_backend())
+    
+    # Logging public key as a string
+    logging.info("Public key: {}".format(public_key))
+    
+    encrypted_data = encrypt_symm(randomno.encode('utf-8'), init_vector.encode('utf-8'), payload)
+    encrypted_key = encrypt_asymmetric(public_key, randomno)
+    
+    # Return statements should be aligned with the function's logic
+    return encrypted_data, encrypted_key
 
