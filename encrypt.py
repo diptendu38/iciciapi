@@ -41,9 +41,12 @@ def encryption_logic(payload, key_ocid):
     init_vector = generate_random(16)
     public_key_bytes = read_key_from_vault(key_ocid)
     public_key = serialization.load_pem_public_key(public_key_bytes, backend=default_backend())
-    
+    public_key_str = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode('utf-8')
     # Logging public key as a string
-    logging.info("Public key: {}".format(public_key))
+    logging.info("Public key: {}".format(public_key_str))
     
     encrypted_data = encrypt_symm(randomno.encode('utf-8'), init_vector.encode('utf-8'), payload)
     encrypted_key = encrypt_asymmetric(public_key, randomno)
