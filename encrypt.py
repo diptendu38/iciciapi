@@ -5,8 +5,13 @@ import base64
 from Crypto.Cipher import AES, PKCS1_OAEP
 from cryptography.hazmat.backends import default_backend
 from Crypto.Util.Padding import pad
+from Crypto.PublicKey import RSA
 from cryptography.hazmat.primitives import serialization
 import oci
+
+def load_private_key_from_string(pub_key_str):
+    public_key = RSA.import_key(pub_key_str)
+    return public_key
 
 def generate_random(length):
     characters = string.ascii_letters + string.digits
@@ -45,12 +50,11 @@ def encryption_logic(payload, key_ocid):
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
     ).decode('utf-8')
-    # Logging public key as a string
+
     logging.info("Public key: {}".format(public_key_str))
-    
+    public_key = load_private_key_from_string(public_key_str) 
     encrypted_data = encrypt_symm(randomno.encode('utf-8'), init_vector.encode('utf-8'), payload)
     encrypted_key = encrypt_asymmetric(public_key, randomno)
     
-    # Return statements should be aligned with the function's logic
     return encrypted_data, encrypted_key
 
