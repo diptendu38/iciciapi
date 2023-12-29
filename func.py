@@ -38,7 +38,7 @@ def handler(ctx, data: io.BytesIO=None):
 
 
     if status_value == '1':
-        encrypted_data,encrypted_key = encrypt.encryption_logic(payload,public_key_ocid) 
+        encrypted_data,encrypted_key = encrypt.encryption_logic(json.dumps(payload),public_key_ocid) 
         json_response = create_json_payload(
                 encrypted_data,
                 encrypted_key
