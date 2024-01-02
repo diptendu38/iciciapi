@@ -7,5 +7,5 @@ run_image: fnproject/python:3.9
 entrypoint: /python/bin/fdk /function/func.py handler
 memory: 256
 config:
-  public_key_ocid: "ocid1.vaultsecret.oc1.ap-mumbai-1.amaaaaaampahd3iao4m2hyty6tvd3d23tiag3iizsre3rekyhvp6tkrpytca"
+  public_key_ocid: "ocid1.vaultsecret.oc1.ap-mumbai-1.amaaaaaampahd3ia3v6m2jmbxo2rndozx4aqoe43nxyrgsmhdatohm566ckq"
   server_private_key_ocid: "ocid1.vaultsecret.oc1.ap-mumbai-1.amaaaaaampahd3iachlgnmmrfofpahggmehf5fxvtgya2zlkzootouzd6qgq"
