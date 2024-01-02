@@ -6,6 +6,7 @@ from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.Util.Padding import pad
 from cryptography.hazmat.backends import default_backend
 from Crypto.PublicKey import RSA
+from cryptography.hazmat.primitives import x509
 from cryptography.hazmat.primitives import serialization
 import oci
 
@@ -26,8 +27,8 @@ def read_certificate_from_vault(cert_ocid):
 
 
 def load_public_key_from_certificate(cert_content):
-    public_key = serialization.load_pem_x509_certificate(cert_content, default_backend()).public_key()
-    return public_key
+    cert = x509.load_pem_x509_certificate(cert_content, default_backend())
+    return cert.public_key()
 
 def encrypt_symm(key, init_vector, value):
     cipher = AES.new(key, AES.MODE_CBC, init_vector)
