@@ -8,7 +8,8 @@ from Crypto.PublicKey import RSA
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from cryptography.hazmat.primitives.serialization import load_pem_public_key
+from cryptography.hazmat.primitives import hashes
+from cryptography.x509 import load_pem_x509_certificate
 import oci
 
 def generate_random(length):
@@ -26,9 +27,8 @@ def read_certificate_from_vault(cert_ocid):
         logging.error("ERROR: failed to retrieve the certificate from the vault - {}".format(ex))
         raise
 
-
 def load_public_key_from_certificate(cert_content):
-    cert = serialization.load_pem_x509_certificate(cert_content.encode('utf-8'), default_backend())
+    cert = load_pem_x509_certificate(cert_content.encode('utf-8'), default_backend())
     return cert.public_key()
 
 def encrypt_symm(key, init_vector, value):
