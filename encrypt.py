@@ -7,6 +7,7 @@ from cryptography.hazmat.backends import default_backend
 from Crypto.Util.Padding import pad
 from Crypto.PublicKey import RSA
 from cryptography import x509
+from cryptography.hazmat.backends.openssl import backend as openssl_backend
 from cryptography.hazmat.primitives.serialization import load_pem_x509_certificate
 import oci
 
@@ -21,7 +22,7 @@ def generate_random(length):
 
 def load_certificate_from_string(cert_str):
     cert_bytes = cert_str.encode('utf-8')
-    cert = load_pem_x509_certificate(cert_bytes, default_backend())
+    cert = load_pem_x509_certificate(cert_bytes, openssl_backend)
     return cert.public_key()
 
 def read_certificate_from_vault(cert_ocid):
