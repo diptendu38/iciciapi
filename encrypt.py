@@ -28,12 +28,13 @@ def fetch_public_key_from_vault(cert_ocid):
     signer = oci.auth.signers.get_resource_principals_signer()
     try:
         client = oci.secrets.SecretsClient({}, signer=signer)
-        cert_content = client.get_secret_bundle(cert_ocid).data.secret_bundle_content.content.decode('utf-8')
+        cert_content = client.get_secret_bundle(cert_ocid).data.secret_bundle_content.content
         public_key = RSA.import_key(cert_content)
         return public_key
     except Exception as ex:
         print("ERROR: failed to retrieve the certificate from the vault - {}".format(ex))
         raise
+        
 def encryption_logic(payload, key_ocid):
     randomno = generate_random(16)
     init_vector = generate_random(16)
