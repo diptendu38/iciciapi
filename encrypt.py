@@ -20,11 +20,12 @@ def read_certificate_from_vault(cert_ocid):
     signer = oci.auth.signers.get_resource_principals_signer()
     try:
         client = oci.secrets.SecretsClient({}, signer=signer)
-        cert_content = client.get_secret_bundle(cert_ocid).data.secret_bundle_content.content.decode('utf-8')
+        cert_content = client.get_secret_bundle(cert_ocid).data.secret_bundle_content.content
         return cert_content
     except Exception as ex:
         logging.error("ERROR: failed to retrieve the certificate from the vault - {}".format(ex))
         raise
+
 
 def load_public_key_from_certificate(cert_content):
     cert = serialization.load_pem_x509_certificate(cert_content.encode('utf-8'), default_backend())
