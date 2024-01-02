@@ -4,10 +4,11 @@ import string
 import base64
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.Util.Padding import pad
-from cryptography.hazmat.backends import default_backend
 from Crypto.PublicKey import RSA
-from cryptography.hazmat.primitives import x509
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
 import oci
 
 def generate_random(length):
@@ -19,15 +20,14 @@ def read_certificate_from_vault(cert_ocid):
     signer = oci.auth.signers.get_resource_principals_signer()
     try:
         client = oci.secrets.SecretsClient({}, signer=signer)
-        cert_content = client.get_secret_bundle(cert_ocid).data.secret_bundle_content.content
+        cert_content = client.get_secret_bundle(cert_ocid).data.secret_bundle_content.content.decode('utf-8')
         return cert_content
     except Exception as ex:
         logging.error("ERROR: failed to retrieve the certificate from the vault - {}".format(ex))
         raise
 
-
 def load_public_key_from_certificate(cert_content):
-    cert = x509.load_pem_x509_certificate(cert_content, default_backend())
+    cert = serialization.load_pem_x509_certificate(cert_content.encode('utf-8'), default_backend())
     return cert.public_key()
 
 def encrypt_symm(key, init_vector, value):
@@ -38,9 +38,15 @@ def encrypt_symm(key, init_vector, value):
     return base64.urlsafe_b64encode(iv_and_ciphertext).decode('utf-8')
 
 def encrypt_asymmetric(public_key, plaintext):
-    cipher = PKCS1_OAEP.new(public_key)
-    encrypted_data = cipher.encrypt(plaintext.encode('utf-8'))
-    return base64.b64encode(encrypted_data).decode('utf-8')
+    ciphertext = public_key.encrypt(
+        plaintext.encode('utf-8'),
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    return base64.b64encode(ciphertext).decode('utf-8')
 
 def encryption_logic(payload, cert_ocid):
     randomno = generate_random(16)
