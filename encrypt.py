@@ -1,10 +1,14 @@
 import string
 import base64
+import json
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto.Util.Padding import pad
 import secrets
 import oci
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.serialization import load_pem_x509_certificate
 
 def generate_random(length):
     characters = string.ascii_letters + string.digits
@@ -28,7 +32,8 @@ def fetch_public_key_from_vault(cert_ocid):
     try:
         client = oci.secrets.SecretsClient({}, signer=signer)
         cert_content = client.get_secret_bundle(cert_ocid).data.secret_bundle_content.content
-        return RSA.import_key(cert_content)
+        cert = load_pem_x509_certificate(cert_content, default_backend())
+        return cert.public_key()
     except Exception as ex:
         print("ERROR: failed to retrieve the certificate from the vault - {}".format(ex))
         raise
