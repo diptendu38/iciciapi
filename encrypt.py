@@ -1,35 +1,18 @@
-import secrets
-import logging
 import string
 import base64
+import json
 from Crypto.Cipher import AES, PKCS1_OAEP
-from cryptography.hazmat.backends import default_backend
-from Crypto.Util.Padding import pad
 from Crypto.PublicKey import RSA
-from cryptography.hazmat.primitives import serialization
+from Crypto.Util.Padding import pad
+import secrets
 import oci
-
-def load_private_key_from_string(pub_key_str):
-    public_key = RSA.import_key(pub_key_str)
-    return public_key
 
 def generate_random(length):
     characters = string.ascii_letters + string.digits
     random_key = ''.join(secrets.choice(characters) for _ in range(length))
     return random_key
 
-def read_key_from_vault(key_ocid):
-    signer = oci.auth.signers.get_resource_principals_signer()
-    try:
-        client = oci.secrets.SecretsClient({}, signer=signer)
-        key_content = client.get_secret_bundle(key_ocid).data.secret_bundle_content.content.encode('utf-8')
-        key_bytes = base64.b64decode(key_content)
-        return key_bytes
-    except Exception as ex:
-        logging.error("ERROR: failed to retrieve the key from the vault - {}".format(ex))
-        raise
-
-def encrypt_symm(key, init_vector, value):
+def encrypt_symmetric(key, init_vector, value):
     cipher = AES.new(key, AES.MODE_CBC, init_vector)
     padded_data = pad(value.encode('utf-8'), AES.block_size)
     encrypted = cipher.encrypt(padded_data)
@@ -41,6 +24,16 @@ def encrypt_asymmetric(public_key, plaintext):
     encrypted_data = cipher.encrypt(plaintext.encode('utf-8'))
     return base64.b64encode(encrypted_data).decode('utf-8')
 
+def fetch_public_key_from_vault(cert_ocid):
+    signer = oci.auth.signers.get_resource_principals_signer()
+    try:
+        client = oci.secrets.SecretsClient({}, signer=signer)
+        cert_content = client.get_secret_bundle(cert_ocid).data.secret_bundle_content.content.decode('utf-8')
+        public_key = RSA.import_key(cert_content)
+        return public_key
+    except Exception as ex:
+        print("ERROR: failed to retrieve the certificate from the vault - {}".format(ex))
+        raise
 def encryption_logic(payload, key_ocid):
     randomno = generate_random(16)
     init_vector = generate_random(16)
