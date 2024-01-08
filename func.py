@@ -1,13 +1,14 @@
 import json,logging,io
 import encrypt
-
+import decrypt
 from fdk import response
 
 
-def create_json_payload(resquest_signature_encrypted_value, symmetric_key_encrypted_value):
+def create_json_payload(resquest_signature_encrypted_value, symmetric_key_encrypted_value,iv):
     payload = {
         "encryptedData": resquest_signature_encrypted_value,
-        "encryptedKey": symmetric_key_encrypted_value
+        "encryptedKey": symmetric_key_encrypted_value,
+        "iv":iv
     }
     return payload
 
@@ -38,11 +39,22 @@ def handler(ctx, data: io.BytesIO=None):
 
 
     if status_value == '1':
-        encrypted_data,encrypted_key = encrypt.encryption_logic(json.dumps(payload),public_key_ocid) 
+        encrypted_data,encrypted_key,iv = encrypt.encryption_logic(json.dumps(payload,public_key_ocid))
         json_response = create_json_payload(
                 encrypted_data,
-                encrypted_key
+                encrypted_key,
+                iv
             )
+        
+    elif status_value == '2':
+        if not payload:
+            json_response = {"error": "No JSON payload provided"}
+
+        encryptedKey = payload.get("encryptedKey", "")
+        encryptedData = payload.get("encryptedData", "")
+
+        json_response = decrypt.decryption_logic(encryptedData,encryptedKey,private_key_ocid)
+
     
     else :
         print("Returning status 500")
