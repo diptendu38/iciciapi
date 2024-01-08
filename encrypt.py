@@ -3,6 +3,7 @@ import base64
 from cryptography.hazmat.primitives import serialization
 from Crypto.Cipher import AES
 from Crypto.Cipher import PKCS1_v1_5
+from Crypto.PublicKey import RSA
 from Crypto.Util.Padding import pad
 from cryptography.hazmat.backends import default_backend
 import secrets
@@ -43,29 +44,22 @@ def encrypt_asymmetric(public_key,message):
 
     return base64.b64encode(encrypted_data).decode('utf-8')
 
-def read_key_from_vault(cert_ocid):
-    signer = oci.auth.signers.get_resource_principals_signer()
-    try:
-        client = oci.secrets.SecretsClient({}, signer=signer)
-        key_content = client.get_secret_bundle(cert_ocid).data.secret_bundle_content.content.encode('utf-8')
-        key_bytes = base64.b64decode(key_content)
-    except Exception as ex:
-        print("ERROR: failed to retrieve the key from the vault", ex)
-        raise
-    return key_bytes
+def load_public_key_from_oci_vault(secret_ocid, compartment_id):
+    signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
+    vault_client = oci.secrets.SecretsClient(config={}, signer=signer)
+
+    response = vault_client.get_secret_bundle(secret_id=secret_ocid, compartment_id=compartment_id)
+    secret_content = base64.b64decode(response.data.secret_bundle_content.content)
+
+    return RSA.import_key(secret_content)
 
 def encryption_logic(payload, cert_ocid):
     randomno = generate_random(16)
     init_vector = generate_random(16)
     iv_bytes = init_vector.encode('utf-8')
-    public_key_bytes = read_key_from_vault(cert_ocid)
-    
-    bank_public_key = serialization.load_pem_public_key(
-        public_key_bytes,
-        backend=default_backend()
-    )
-
-    encrypted_data = encrypt_symmetric(randomno.encode('utf-8'), iv_bytes, payload)
+    compartment_id = 'ocid1.compartment.oc1..aaaaaaaatoj2hox2reiyvvlayuphc3i7pcssx7gvu3a6n4c6zutjcjrm6uiq'
+    public_key = load_public_key_from_oci_vault(cert_ocid, compartment_id)
+    encrypted_data = encrypt_symmetric(randomno, init_vector, payload)
     encrypted_key = encrypt_asymmetric(bank_public_key, randomno)
     
     return encrypted_data,encrypted_key,base64.b64encode(iv_bytes).decode('utf-8')
