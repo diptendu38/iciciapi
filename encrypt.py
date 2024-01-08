@@ -3,8 +3,8 @@ import base64
 from cryptography.hazmat.primitives import serialization
 from Crypto.Cipher import AES
 from Crypto.Cipher import PKCS1_v1_5
-from Crypto.PublicKey import RSA
 from Crypto.Util.Padding import pad
+from cryptography.hazmat.backends import default_backend
 import secrets
 import oci
 
