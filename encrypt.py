@@ -1,5 +1,6 @@
 import string
 import base64
+from cryptography.hazmat.primitives import serialization
 from Crypto.Cipher import AES
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
@@ -42,23 +43,29 @@ def encrypt_asymmetric(public_key,message):
 
     return base64.b64encode(encrypted_data).decode('utf-8')
 
-def fetch_public_key_from_vault(cert_ocid):
+def read_key_from_vault(cert_ocid):
     signer = oci.auth.signers.get_resource_principals_signer()
     try:
         client = oci.secrets.SecretsClient({}, signer=signer)
-        cert_content = client.get_secret_bundle(cert_ocid).data.secret_bundle_content.content
-        return RSA.import_key(cert_content)
+        key_content = client.get_secret_bundle(key_ocid).data.secret_bundle_content.content.encode('utf-8')
+        key_bytes = base64.b64decode(key_content)
     except Exception as ex:
-        print("ERROR: failed to retrieve the certificate from the vault - {}".format(ex))
+        print("ERROR: failed to retrieve the key from the vault", ex)
         raise
+    return key_bytes
 
 def encryption_logic(payload, cert_ocid):
     randomno = generate_random(16)
     init_vector = generate_random(16)
     iv_bytes = init_vector.encode('utf-8')
-    public_key = fetch_public_key_from_vault(cert_ocid)
+    public_key_bytes = read_key_from_vault(cert_ocid)
+    
+    bank_public_key = serialization.load_pem_public_key(
+        public_key_bytes,
+        backend=default_backend()
+    )
 
     encrypted_data = encrypt_symmetric(randomno.encode('utf-8'), iv_bytes, payload)
-    encrypted_key = encrypt_asymmetric(public_key, randomno)
+    encrypted_key = encrypt_asymmetric(bank_public_key, randomno)
     
     return encrypted_data,encrypted_key,base64.b64encode(iv_bytes).decode('utf-8')
