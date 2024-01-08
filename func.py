@@ -15,7 +15,7 @@ def create_json_payload(request_signature_encrypted_value, symmetric_key_encrypt
 
 def handle_encryption(payload, public_key_ocid):
     try:
-        encrypted_data, encrypted_key, iv = encrypt.encryption_logic(json.dumps(payload, public_key_ocid))
+        encrypted_data, encrypted_key, iv = encrypt.encryption_logic(json.dumps(payload),public_key_ocid)
         return create_json_payload(encrypted_data, encrypted_key, iv)
     except Exception as e:
         logging.exception("Encryption error: %s", e)
