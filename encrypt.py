@@ -72,6 +72,6 @@ def encryption_logic(payload, cert_ocid):
     iv_bytes = init_vector.encode('utf-8')
     public_key = fetch_public_key_from_vault(cert_ocid)
     encrypted_data = encrypt_symmetric(randomno, init_vector, payload)
-    encrypted_key = encrypt_asymmetric(bank_public_key, randomno)
+    encrypted_key = encrypt_asymmetric(public_key, randomno)
     
     return encrypted_data,encrypted_key,base64.b64encode(iv_bytes).decode('utf-8')
