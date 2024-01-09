@@ -37,7 +37,7 @@ def decrypt_asymmetric(encrypted_data, private_key):
     decrypted_data = cipher.decrypt(encrypted_bytes, None)
     return decrypted_data.decode('utf-8')
 
-def decryption_logic(encrypted_data, encrypted_key, key_ocid):
+'''def decryption_logic(encrypted_data, encrypted_key, key_ocid):
     private_key_bytes = read_key_from_vault(key_ocid)
 
     private_key = serialization.load_pem_private_key(
@@ -58,4 +58,34 @@ def decryption_logic(encrypted_data, encrypted_key, key_ocid):
 
     decrypted_payload = decrypt_symmetric(plain_key, encrypted_data)
     print(f"Decrypted Payload: {decrypted_payload}")
+    return decrypted_payload'''
+
+def decryption_logic(encrypted_data, encrypted_key, key_ocid):
+    private_key_bytes = read_key_from_vault(key_ocid)
+
+    private_key = serialization.load_pem_private_key(
+        private_key_bytes,
+        password=None,
+        backend=default_backend()
+    )
+    private_key_str = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    ).decode('utf-8')
+
+    private_key = load_private_key_from_string(private_key_str)
+
+    # Decrypt the asymmetrically encrypted session key
+    plain_key_bytes = decrypt_asymmetric(encrypted_key, private_key)
+
+    # Decode the bytes to string if necessary
+    plain_key = plain_key_bytes.decode('utf-8')
+
+    print(f"Decrypted Session Key: {plain_key}")
+
+    # Decrypt the symmetrically encrypted payload
+    decrypted_payload = decrypt_symmetric(plain_key, encrypted_data)
+    print(f"Decrypted Payload: {decrypted_payload}")
     return decrypted_payload
+
