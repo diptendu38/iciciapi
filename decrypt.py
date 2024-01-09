@@ -34,7 +34,7 @@ def fetch_private_key_from_vault(key_ocid):
         raise
 
 def decrypt_symmetric(plain_key, ciphertext):
-    key = plain_key.encode('utf-8')
+    #key = plain_key.encode('utf-8')
     iv = ciphertext[:16]
     ciphertext_data = ciphertext[16:]
 
