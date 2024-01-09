@@ -55,7 +55,7 @@ def encrypt_asymmetric(public_key,message):
 
 
 def log_public_key_content(public_key):
-    # Convert the public key to a PEM format string
+    # Export the public key to PEM format
     pem_format = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
