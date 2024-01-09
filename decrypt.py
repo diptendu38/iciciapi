@@ -46,7 +46,8 @@ def decrypt_asymmetric(encrypted_data, private_key):
     cipher = PKCS1_v1_5.new(private_key)
     encrypted_bytes = base64.b64decode(encrypted_data)
     decrypted_data = cipher.decrypt(encrypted_bytes, None)
-    return decrypted_data.decode('utf-8')
+    #return decrypted_data.decode('utf-8')
+    return decrypted_data
 
 '''def decryption_logic(encrypted_data, encrypted_key, key_ocid):
     private_key_bytes = read_key_from_vault(key_ocid)
