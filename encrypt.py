@@ -44,21 +44,43 @@ def encrypt_asymmetric(public_key,message):
 
     return base64.b64encode(encrypted_data).decode('utf-8')
 
-def load_public_key_from_oci_vault(secret_ocid, compartment_id):
+'''def load_public_key_from_oci_vault(secret_ocid, compartment_id):
     signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
     vault_client = oci.secrets.SecretsClient(config={}, signer=signer)
 
     response = vault_client.get_secret_bundle(secret_id=secret_ocid, compartment_id=compartment_id)
     secret_content = base64.b64decode(response.data.secret_bundle_content.content)
 
-    return RSA.import_key(secret_content)
+    return RSA.import_key(secret_content)'''
+
+
+def log_public_key_content(public_key):
+    # Convert the public key to a PEM format string
+    pem_format = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode('utf-8')
+
+    # Log the public key content
+    print("Public Key Contents:")
+    print(pem_format)
+    
+def fetch_public_key_from_vault(cert_ocid):
+    signer = oci.auth.signers.get_resource_principals_signer()
+    try:
+        client = oci.secrets.SecretsClient({}, signer=signer)
+        cert_content = client.get_secret_bundle(cert_ocid).data.secret_bundle_content.content
+        return RSA.import_key(cert_content)
+        log_public_key_content(public_key)
+    except Exception as ex:
+        print("ERROR: failed to retrieve the certificate from the vault - {}".format(ex))
+        raise
 
 def encryption_logic(payload, cert_ocid):
     randomno = generate_random(16)
     init_vector = generate_random(16)
     iv_bytes = init_vector.encode('utf-8')
-    compartment_id = 'ocid1.compartment.oc1..aaaaaaaatoj2hox2reiyvvlayuphc3i7pcssx7gvu3a6n4c6zutjcjrm6uiq'
-    public_key = load_public_key_from_oci_vault(cert_ocid, compartment_id)
+    public_key = fetch_public_key_from_vault(cert_ocid)
     encrypted_data = encrypt_symmetric(randomno, init_vector, payload)
     encrypted_key = encrypt_asymmetric(bank_public_key, randomno)
     
