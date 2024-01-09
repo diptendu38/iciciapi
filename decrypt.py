@@ -42,7 +42,7 @@ def decryption_logic(encrypted_data, encrypted_key, key_ocid):
 
     private_key = serialization.load_pem_private_key(
         private_key_bytes,
-        password=None,  
+        password=None,
         backend=default_backend()
     )
     private_key_str = private_key.private_bytes(
@@ -50,12 +50,11 @@ def decryption_logic(encrypted_data, encrypted_key, key_ocid):
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption()
     ).decode('utf-8')
-    
+
     private_key = load_private_key_from_string(private_key_str)
 
     plain_key = decrypt_asymmetric(encrypted_key, private_key)
-    print(f"Decrypted Session Key: {plain_key.decode('utf-8')}")
-
+    print(f"Decrypted Session Key: {plain_key}")
 
     decrypted_payload = decrypt_symmetric(plain_key, encrypted_data)
     print(f"Decrypted Payload: {decrypted_payload}")
