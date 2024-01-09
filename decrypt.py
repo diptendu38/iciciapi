@@ -75,7 +75,8 @@ def decryption_logic(encrypted_data, encrypted_key, key_ocid):
     private_key = fetch_private_key_from_vault(key_ocid)
     plain_key = decrypt_asymmetric(encrypted_key, private_key)
     print(f"Decrypted Session Key: {plain_key}")
-    decrypted_payload = decrypt_symmetric(plain_key, encrypted_data)
+    encrypted_data_bytes = base64.b64decode(encrypted_data)
+    decrypted_payload = decrypt_symmetric(plain_key, encrypted_data_bytes)
     print(f"Decrypted Payload: {decrypted_payload}")
     return decrypted_payload
 
