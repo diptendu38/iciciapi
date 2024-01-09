@@ -53,17 +53,6 @@ def encrypt_asymmetric(public_key,message):
 
     return RSA.import_key(secret_content)'''
 
-
-def log_public_key_content(public_key):
-    # Export the public key to PEM format
-    pem_format = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    ).decode('utf-8')
-
-    # Log the public key content
-    print("Public Key Contents:")
-    print(pem_format)
     
 def fetch_public_key_from_vault(cert_ocid):
     signer = oci.auth.signers.get_resource_principals_signer()
@@ -72,7 +61,6 @@ def fetch_public_key_from_vault(cert_ocid):
         cert_content = client.get_secret_bundle(cert_ocid).data.secret_bundle_content.content
         cert_bytes = base64.b64decode(cert_content)
         public_key = RSA.import_key(cert_bytes)
-        log_public_key_content(public_key)
         return public_key
     except Exception as ex:
         print("ERROR: failed to retrieve the certificate from the vault - {}".format(ex))
