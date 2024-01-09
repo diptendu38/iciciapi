@@ -38,7 +38,7 @@ def decrypt_symmetric(plain_key, ciphertext):
     iv = ciphertext[:16]
     ciphertext_data = ciphertext[16:]
 
-    cipher = AES.new(key, AES.MODE_CBC, iv)
+    cipher = AES.new(plain_key, AES.MODE_CBC, iv)
     decrypted = unpad(cipher.decrypt(ciphertext_data), AES.block_size)
     return decrypted.decode('utf-8')
 
