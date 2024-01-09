@@ -70,8 +70,10 @@ def fetch_public_key_from_vault(cert_ocid):
     try:
         client = oci.secrets.SecretsClient({}, signer=signer)
         cert_content = client.get_secret_bundle(cert_ocid).data.secret_bundle_content.content
-        return RSA.import_key(cert_content)
+        cert_bytes = base64.b64decode(cert_content)
+        public_key = RSA.import_key(cert_bytes)
         log_public_key_content(public_key)
+        return public_key
     except Exception as ex:
         print("ERROR: failed to retrieve the certificate from the vault - {}".format(ex))
         raise
