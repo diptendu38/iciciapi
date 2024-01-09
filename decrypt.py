@@ -7,11 +7,11 @@ import oci,logging
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 
-def load_private_key_from_string(private_key_str):
+'''def load_private_key_from_string(private_key_str):
     private_key = RSA.import_key(private_key_str)
-    return private_key
+    return private_key'''
 
-def read_key_from_vault(key_ocid):
+'''def read_key_from_vault(key_ocid):
     signer = oci.auth.signers.get_resource_principals_signer()
     try:
         client = oci.secrets.SecretsClient({}, signer=signer)
@@ -20,6 +20,17 @@ def read_key_from_vault(key_ocid):
         return key_bytes
     except Exception as ex:
         logging.error("ERROR: failed to retrieve the key from the vault - {}".format(ex))
+        raise'''
+def fetch_private_key_from_vault(key_ocid):
+    signer = oci.auth.signers.get_resource_principals_signer()
+    try:
+        client = oci.secrets.SecretsClient({}, signer=signer)
+        key_content = client.get_secret_bundle(key_ocid).data.secret_bundle_content.content
+        key_bytes = base64.b64decode(key_content)
+        private_key = RSA.import_key(key_bytes)
+        return private_key
+    except Exception as ex:
+        print("ERROR: failed to retrieve the private key from the vault - {}".format(ex))
         raise
 
 def decrypt_symmetric(plain_key, ciphertext):
@@ -61,30 +72,9 @@ def decrypt_asymmetric(encrypted_data, private_key):
     return decrypted_payload'''
 
 def decryption_logic(encrypted_data, encrypted_key, key_ocid):
-    private_key_bytes = read_key_from_vault(key_ocid)
-
-    private_key = serialization.load_pem_private_key(
-        private_key_bytes,
-        password=None,
-        backend=default_backend()
-    )
-    private_key_str = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
-    ).decode('utf-8')
-
-    private_key = load_private_key_from_string(private_key_str)
-
-    # Decrypt the asymmetrically encrypted session key
-    plain_key_bytes = decrypt_asymmetric(encrypted_key, private_key)
-
-    # Decode the bytes to string if necessary
-    plain_key = plain_key_bytes.decode('utf-8')
-
+    private_key = fetch_private_key_from_vault(key_ocid)
+    plain_key = decrypt_asymmetric(encrypted_key, private_key)
     print(f"Decrypted Session Key: {plain_key}")
-
-    # Decrypt the symmetrically encrypted payload
     decrypted_payload = decrypt_symmetric(plain_key, encrypted_data)
     print(f"Decrypted Payload: {decrypted_payload}")
     return decrypted_payload
