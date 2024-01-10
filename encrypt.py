@@ -16,33 +16,23 @@ def generate_random(length):
 
 def encrypt_symmetric(key, init_vector, value):
     try:
-        key_bytes = key.encode('utf-8')
-        iv_bytes = init_vector.encode('utf-8')
-        value_bytes = value.encode('utf-8')
-
-        cipher = AES.new(key_bytes, AES.MODE_CBC, iv_bytes)
-        padded_data = pad(value_bytes, AES.block_size)
-
+        cipher = AES.new(key.encode('utf-8'), AES.MODE_CBC, init_vector.encode('utf-8'))
+        padded_data = pad(value.encode('utf-8'), AES.block_size)
         encrypted_data = cipher.encrypt(padded_data)
-
         return base64.b64encode(encrypted_data).decode('utf-8')
     except Exception as ex:
         print(ex)
+        return None
 
-    return None
-
-def encrypt_asymmetric(public_key,message):
-    cipher = PKCS1_v1_5.new(public_key)
-    message_bytes = message.encode('utf-8')
-    chunk_size = 245
-    chunks = [message_bytes[i:i + chunk_size] for i in range(0, len(message_bytes), chunk_size)]
-
-    encrypted_data = b""
-    for chunk in chunks:
-        encrypted_chunk = cipher.encrypt(chunk)
-        encrypted_data += encrypted_chunk
-
-    return base64.b64encode(encrypted_data).decode('utf-8')
+def encrypt_asymmetric(b64_msg, public_key):
+    try:
+        cipher = PKCS1_v1_5.new(public_key)
+        msg = base64.b64decode(b64_msg)
+        encrypted_msg = cipher.encrypt(msg)
+        return base64.b64encode(encrypted_msg).decode('utf-8')
+    except Exception as ex:
+        print(ex)
+        return None
 
 '''def load_public_key_from_oci_vault(secret_ocid, compartment_id):
     signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
@@ -72,6 +62,6 @@ def encryption_logic(payload, cert_ocid):
     iv_bytes = init_vector.encode('utf-8')
     public_key = fetch_public_key_from_vault(cert_ocid)
     encrypted_data = encrypt_symmetric(randomno, init_vector, payload)
-    encrypted_key = encrypt_asymmetric(public_key, randomno)
+    encrypted_key = encrypt_asymmetric(public_key, base64.b64encode(randomno.encode('utf-8')).decode('utf-8'))
     
     return encrypted_data,encrypted_key,base64.b64encode(iv_bytes).decode('utf-8')
