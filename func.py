@@ -29,7 +29,7 @@ def handle_decryption(payload, private_key_ocid):
         encrypted_key = payload.get("encryptedKey", "")
         encrypted_data = payload.get("encryptedData", "")
 
-        return decrypt.decryption_logic(encrypted_data, encrypted_key, private_key_ocid)
+        return json.loads(decrypt.decryption_logic(encrypted_data, encrypted_key, private_key_ocid))
     except Exception as e:
         logging.exception("Decryption error: %s", e)
         return {"error": f"Decryption error: {e}"}
